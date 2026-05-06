@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>SPK SAW</title>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+<h2>Aplikasi SPK SAW</h2>
+
+<button onclick="loadExcel()">Load Data Excel</button>
+<button onclick="hitung()">Hitung SAW</button>
+
+<table border="1" id="hasil">
+<tr><th>Nama</th><th>Nilai</th></tr>
+</table>
+
+<script>
+
+const bobot = {
+  QTY: 0.4,
+  TOTAL: 0.4,
+  HARGA: 0.2
+};
+
+let alternatif = [];
+
+function loadExcel() {
+  fetch("file:///android_asset/Bagi Full data rehan new.xlsx")
+    .then(res => res.arrayBuffer())
+    .then(data => {
+      let workbook = XLSX.read(data, { type: "array" });
+      let sheet = workbook.Sheets[workbook.SheetNames[0]];
+      let json = XLSX.utils.sheet_to_json(sheet);
+
+      alternatif = json.map(d => ({
+        nama: d["NAMA PRODUK"],
+        QTY: parseFloat(d["QTY"]),
+        HARGA: parseFloat(d["HARGA"]),
+        TOTAL: parseFloat(d["TOTAL"])
+      }));
+
+      alert("Data berhasil dimuat: " + alternatif.length);
+    });
+}
+
+function hitung() {
+  if (alternatif.length === 0) {
+    alert("Load data dulu!");
+    return;
+  }
+
+  let maxQ = Math.max(...alternatif.map(d => d.QTY));
+  let maxT = Math.max(...alternatif.map(d => d.TOTAL));
+  let minH = Math.min(...alternatif.map(d => d.HARGA));
+
+  let hasil = alternatif.map(d => {
+    let nQ = d.QTY / maxQ;
+    let nT = d.TOTAL / maxT;
+    let nH = minH / d.HARGA;
+
+    let nilai =
+      nQ * bobot.QTY +
+      nT * bobot.TOTAL +
+      nH * bobot.HARGA;
+
+    return { nama: d.nama, nilai };
+  }).sort((a,b)=>b.nilai-a.nilai);
+
+  let tabel = document.getElementById("hasil");
+  tabel.innerHTML = "<tr><th>Nama</th><th>Nilai</th></tr>";
+
+  hasil.forEach(h => {
+    tabel.innerHTML += `<tr>
+      <td>${h.nama}</td>
+      <td>${h.nilai.toFixed(3)}</td>
+    </tr>`;
+  });
+}
+
+</script>
+
+</body>
+</html>
